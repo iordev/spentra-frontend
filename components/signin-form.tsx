@@ -30,7 +30,7 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
     router.push("/overview/dashboard");
   };
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
+    <div className={cn("flex flex-col gap-5", className)} {...props}>
       <form onSubmit={handleSubmit}>
         <FieldGroup>
           <div className="flex flex-col items-center gap-3 text-center">
@@ -42,8 +42,8 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
                 <Image
                   src="/spentra-light-logo.png"
                   alt="Spentra logo light"
-                  width={120}
-                  height={40}
+                  width={1150}
+                  height={10}
                   priority
                   className="w-auto h-auto object-contain dark:hidden"
                 />
@@ -51,8 +51,8 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
                 <Image
                   src="/spentra-dark-logo.png"
                   alt="Spentra logo dark"
-                  width={120}
-                  height={40}
+                  width={115}
+                  height={10}
                   priority
                   className="w-auto h-auto object-contain hidden dark:block"
                 />

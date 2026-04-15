@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import Image from "next/image";
 import { ModeToggle } from "@/components/mode-toggle";
 import {
   Select,
@@ -16,7 +15,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
-import { useRouter } from "next/navigation"; // for App Router
+import { useRouter } from "next/navigation";
+import { ArrowLeft } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useCheckEmail } from "@/hooks/useCheckEmail";
+import axios from "axios";
+import { isValidEmail } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 interface SignUpData {
   email: string;
@@ -33,6 +38,8 @@ interface SignUpData {
 
 export default function MultiStepSignUp() {
   const router = useRouter();
+  const { mutateAsync: checkEmail, isPending } = useCheckEmail();
+  const [emailError, setEmailError] = useState("");
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<SignUpData>({
     email: "",
@@ -50,10 +57,34 @@ export default function MultiStepSignUp() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
+    if (name === "email") setEmailError(""); // clear error on change
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleNextStep = () => {
+  const handleNextStep = async () => {
+    if (currentStep === 1) {
+      if (!formData.email) {
+        setEmailError("Email address is required.");
+        return;
+      }
+
+      try {
+        const { exists } = await checkEmail(formData.email);
+        if (exists) {
+          setEmailError("This email is already registered. Please sign in instead.");
+          return;
+        }
+        // exists === false → clear any old error and proceed
+        setEmailError("");
+      } catch (error) {
+        const message = axios.isAxiosError(error)
+          ? (error.response?.data?.message ?? "Something went wrong. Please try again.")
+          : "Something went wrong. Please try again.";
+        setEmailError(message);
+        return;
+      }
+    }
+
     if (currentStep < 6) {
       setCurrentStep(currentStep + 1);
     }
@@ -100,34 +131,30 @@ export default function MultiStepSignUp() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center bg-background px-4 py-8">
-      {/* Dark / Light mode toggle */}
-      <div className="absolute top-4 right-4 z-50">
+      {/* Top bar: back button left, mode toggle right */}
+      <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
+        <Button variant="ghost" size="sm" asChild>
+          <Link href="/">
+            <ArrowLeft className="h-4 w-4 mr-1" />
+            Back to Home
+          </Link>
+        </Button>
         <ModeToggle />
       </div>
-      <div className="w-full max-w-md">
-        {/* Logo */}
-        <div className="mb-8 text-center">
-          <div className="flex items-center justify-center">
-            <Link href="#">
-              {/* Light logo - visible in light mode */}
-              <Image
-                src="/spentra-light-logo.png"
-                alt="Spentra logo light"
-                width={120}
-                height={40}
-                priority
-                className="w-auto h-auto object-contain dark:hidden"
-              />
 
-              <Image
-                src="/spentra-dark-logo.png"
-                alt="Spentra logo dark"
-                width={120}
-                height={40}
-                priority
-                className="w-auto h-auto object-contain hidden dark:block"
-              />
-            </Link>
+      <div className="w-full max-w-md pt-20">
+        {/* Header */}
+        <div className="mb-8 text-center">
+          <div className="flex justify-center mb-4">
+            <div className="flex items-center gap-2">
+              <Avatar className="h-8 w-8 rounded-lg">
+                <AvatarImage src="/favicon.ico" alt="App logo" />
+                <AvatarFallback className="rounded-lg">S</AvatarFallback>
+              </Avatar>
+              <div className="flex flex-col gap-0.5 leading-none">
+                <span className="font-medium">Spentra</span>
+              </div>
+            </div>
           </div>
           <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
           <p className="text-muted-foreground mt-2">Start your journey to financial freedom</p>
@@ -179,9 +206,12 @@ export default function MultiStepSignUp() {
                     placeholder="user@example.com"
                     value={formData.email}
                     onChange={handleChange}
-                    className="bg-input border-border text-foreground placeholder:text-muted-foreground"
+                    className={`bg-input border-border text-foreground placeholder:text-muted-foreground ${
+                      emailError ? "border-destructive focus-visible:ring-destructive" : ""
+                    }`}
                     required
                   />
+                  {emailError && <p className="text-xs text-destructive">{emailError}</p>}
                 </div>
               </div>
             )}
@@ -395,7 +425,7 @@ export default function MultiStepSignUp() {
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Month" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-[300px] overflow-y-auto" position="popper">
+                        <SelectContent className="max-h-75 overflow-y-auto" position="popper">
                           <SelectItem value="1">January</SelectItem>
                           <SelectItem value="2">February</SelectItem>
                           <SelectItem value="3">March</SelectItem>
@@ -485,7 +515,7 @@ export default function MultiStepSignUp() {
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Year" />
                         </SelectTrigger>
-                        <SelectContent className="max-h-[300px] overflow-y-auto" position="popper">
+                        <SelectContent className="max-h-75 overflow-y-auto" position="popper">
                           {Array.from({ length: 100 }, (_, i) => {
                             const year = new Date().getFullYear() - 18 - i;
                             return (
@@ -542,13 +572,34 @@ export default function MultiStepSignUp() {
                 </Button>
               )}
               {currentStep < 6 && (
-                <Button
-                  type="button"
-                  onClick={handleNextStep}
-                  className="flex-1 bg-primary text-primary-foreground hover:bg-primary/90 font-medium"
-                >
-                  Next
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      {/* span wrapper needed — disabled buttons don't fire mouse events */}
+                      <span className="flex-1">
+                        <Button
+                          type="button"
+                          onClick={handleNextStep}
+                          disabled={
+                            currentStep === 1 && (!formData.email || !isValidEmail(formData.email))
+                          }
+                          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          {isPending ? "Checking..." : "Next"}
+                        </Button>
+                      </span>
+                    </TooltipTrigger>
+                    {currentStep === 1 && (!formData.email || !isValidEmail(formData.email)) && (
+                      <TooltipContent>
+                        <p>
+                          {!formData.email
+                            ? "Email address is required."
+                            : "Please enter a valid email address."}
+                        </p>
+                      </TooltipContent>
+                    )}
+                  </Tooltip>
+                </TooltipProvider>
               )}
               {currentStep === 6 && (
                 <Button
