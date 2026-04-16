@@ -6,3 +6,9 @@ export const useCheckEmail = () => {
     mutationFn: (email: string) => authService.checkEmail(email),
   });
 };
+
+export const useCheckUsername = () => {
+  return useMutation({
+    mutationFn: (username: string) => authService.checkUsername(username),
+  });
+};

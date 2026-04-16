@@ -2,6 +2,10 @@ export interface CheckEmailResponse {
   exists: boolean;
 }
 
+export interface CheckUsernameResponse {
+  exists: boolean;
+}
+
 export interface RegisterFormData {
   email: string;
   username: string;
