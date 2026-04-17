@@ -54,13 +54,43 @@ export const step6Schema = z.object({
   ),
 });
 
-// infer types from schemas
-export type Step1Data = z.infer<typeof step1Schema>;
-export type Step2Data = z.infer<typeof step2Schema>;
-export type Step3Data = z.infer<typeof step3Schema>;
-export type Step4Data = z.infer<typeof step4Schema>;
-export type Step5Data = z.infer<typeof step5Schema>;
-export type Step6Data = z.infer<typeof step6Schema>;
+export const step7Schema = z.object({
+  occupation: z.string().min(1, "Occupation is required."),
+});
 
-// Combined type for the whole form
-export type SignUpFormData = Step1Data & Step2Data & Step3Data & Step4Data & Step5Data & Step6Data;
+export const step8Schema = z.object({
+  country: z.string().min(1, "Country is required."),
+  currency: z.string().min(1, "Currency is required."),
+  timezone: z.string().min(1, "Timezone is required."),
+});
+
+// 2. Build the schema — no cast needed here
+export const fullSchema = step1Schema
+  .merge(step2Schema)
+  .merge(step3BaseSchema)
+  .merge(step4Schema)
+  .merge(step5Schema)
+  .merge(step6Schema)
+  .merge(step7Schema)
+  .merge(step8Schema)
+  .refine(data => data.password === data.confirmPassword, {
+    message: "Passwords do not match.",
+    path: ["confirmPassword"],
+  });
+
+export type SignUpFormData = {
+  email: string;
+  username: string;
+  password: string;
+  confirmPassword: string;
+  firstName: string;
+  middleName?: string;
+  lastName: string;
+  suffix?: string;
+  gender: string;
+  birthday: Date;
+  occupation: string;
+  country: string;
+  currency: string;
+  timezone: string;
+};

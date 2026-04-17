@@ -20,33 +20,29 @@ import { ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import axios from "axios";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useCheckEmail, useCheckUsername } from "@/hooks/useAuth";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import {
+  useCheckEmail,
+  useCheckUsername,
+  useGetCountries,
+  useGetCurrencies,
+  useGetOccupations,
+  useGetTimezones,
+} from "@/hooks/useAuth";
+import { Controller, Resolver, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import {
-  SignUpFormData,
+  fullSchema,
+  type SignUpFormData,
   step1Schema,
   step2Schema,
-  step3BaseSchema,
   step3Schema,
   step4Schema,
   step5Schema,
   step6Schema,
+  step7Schema,
+  step8Schema,
 } from "@/lib/schemas/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-
-interface SignUpData {
-  email: string;
-  username: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  middleName: string;
-  lastName: string;
-  suffix: string;
-  gender: string;
-  birthday: Date | undefined;
-}
 
 const steps = [
   {
@@ -73,24 +69,56 @@ const steps = [
     title: "Your Birthday",
     description: "Complete your profile setup",
   },
+  {
+    title: "Occupation",
+    description: "Tell us what you do",
+  },
+  {
+    title: "Set Your Preferences",
+    description: "Select your country, currency, timezone, and occupation",
+  },
 ];
 
-export const fullSchema = step1Schema
-  .merge(step2Schema)
-  .merge(step3BaseSchema)
-  .merge(step4Schema)
-  .merge(step5Schema)
-  .merge(step6Schema)
-  .refine(data => data.password === data.confirmPassword, {
-    message: "Passwords do not match.",
-    path: ["confirmPassword"],
-  });
+const stepSchemas: Record<number, z.ZodTypeAny> = {
+  1: step1Schema,
+  2: step2Schema,
+  3: step3Schema, // includes the .refine for password match
+  4: step4Schema,
+  5: step5Schema,
+  6: step6Schema,
+  7: step7Schema,
+  8: step8Schema,
+};
 
 export default function MultiStepSignUp() {
   // 1. hooks
   const router = useRouter();
   const { mutateAsync: checkEmail, isPending: isCheckingEmail } = useCheckEmail();
   const { mutateAsync: checkUsername, isPending: isCheckingUsername } = useCheckUsername();
+
+  const [currentStep, setCurrentStep] = useState(1);
+
+  const { data: occupationsData, isLoading: isLoadingOccupations } = useGetOccupations(
+    currentStep === 7
+  );
+  const { data: countriesData, isLoading: isLoadingCountries } = useGetCountries(currentStep === 8);
+  const { data: currenciesData, isLoading: isLoadingCurrencies } = useGetCurrencies(
+    currentStep === 8
+  );
+  const { data: timezonesData, isLoading: isLoadingTimezones } = useGetTimezones(currentStep === 8);
+
+  const occupations = (occupationsData ?? []).map(o => ({ label: o.name, value: String(o.id) }));
+  const countries = (countriesData ?? []).map(c => ({
+    label: c.name,
+    value: String(c.id),
+    code: c.code,
+  }));
+  const currencies = (currenciesData ?? []).map(c => ({
+    label: c.name,
+    value: String(c.id),
+    symbol: c.symbol,
+  }));
+  const timezones = (timezonesData ?? []).map(t => ({ label: t.name, value: String(t.id) }));
 
   // 2. react hook form
   const {
@@ -101,7 +129,7 @@ export default function MultiStepSignUp() {
     getValues,
     formState: { errors },
   } = useForm<SignUpFormData>({
-    resolver: zodResolver(fullSchema),
+    resolver: zodResolver(fullSchema) as Resolver<SignUpFormData>, // ✅ cast here only
     defaultValues: {
       email: "",
       username: "",
@@ -113,11 +141,13 @@ export default function MultiStepSignUp() {
       suffix: "",
       gender: "",
       birthday: undefined,
+      occupation: "",
+      country: "",
+      currency: "",
+      timezone: "",
     },
   });
-
   // 3. state
-  const [currentStep, setCurrentStep] = useState(1);
 
   // const [agreedToTerms, setAgreedToTerms] = useState(false);
 
@@ -185,6 +215,14 @@ export default function MultiStepSignUp() {
     return await trigger("birthday");
   };
 
+  const validateStep7 = async (): Promise<boolean> => {
+    return await trigger("occupation");
+  };
+
+  const validateStep8 = async (): Promise<boolean> => {
+    return await trigger(["country", "currency", "timezone"]);
+  };
+
   const stepValidators: Record<number, () => Promise<boolean>> = {
     1: validateStep1,
     2: validateStep2,
@@ -192,15 +230,8 @@ export default function MultiStepSignUp() {
     4: validateStep4,
     5: validateStep5,
     6: validateStep6,
-  };
-
-  const stepSchemas: Record<number, z.ZodTypeAny> = {
-    1: step1Schema,
-    2: step2Schema,
-    3: step3Schema, // includes the .refine for password match
-    4: step4Schema,
-    5: step5Schema,
-    6: step6Schema,
+    7: validateStep7,
+    8: validateStep8,
   };
 
   const watchedValues = useWatch({ control });
@@ -208,7 +239,9 @@ export default function MultiStepSignUp() {
   const isStepValid = useMemo(() => {
     const schema = stepSchemas[currentStep];
     if (!schema) return true;
-    return schema.safeParse(watchedValues).success;
+    const result = schema.safeParse(watchedValues);
+    console.log("isStepValid:", result, watchedValues);
+    return result.success;
   }, [watchedValues, currentStep]);
 
   const stepTooltipMessage: Record<number, string> = {
@@ -224,6 +257,8 @@ export default function MultiStepSignUp() {
     6: !watchedValues.birthday
       ? "Date of birth is required."
       : "You must be at least 18 years old.",
+    7: "Occupation is required.",
+    8: "Country, Currency, and Timezone are required.",
   };
 
   // 6. handlers
@@ -233,7 +268,7 @@ export default function MultiStepSignUp() {
       const isValid = await validate();
       if (!isValid) return;
     }
-    if (currentStep < 6) setCurrentStep(prev => prev + 1);
+    if (currentStep < 8) setCurrentStep(prev => prev + 1);
   };
 
   const handlePreviousStep = () => {
@@ -244,7 +279,7 @@ export default function MultiStepSignUp() {
     e.preventDefault();
     // Handle final submission
     console.log("Sign up complete:", getValues());
-    router.push("/overview/dashboard");
+    router.push("/");
   };
 
   return (
@@ -301,7 +336,7 @@ export default function MultiStepSignUp() {
 
         {/* Form Card */}
         <div className="rounded-2xl bg-card border border-border p-8 shadow-sm">
-          <form onSubmit={currentStep === 6 ? handleSubmit : e => e.preventDefault()}>
+          <form onSubmit={currentStep === 8 ? handleSubmit : e => e.preventDefault()}>
             {/* Step Title */}
             <div className="mb-4">
               <h2 className="text-xl font-bold text-foreground">{steps[currentStep - 1].title}</h2>
@@ -690,63 +725,212 @@ export default function MultiStepSignUp() {
               </div>
             )}
 
+            {currentStep === 7 && (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label className="text-foreground font-medium text-sm">Occupation</Label>
+
+                  <Controller
+                    control={control}
+                    name="occupation"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isLoadingOccupations}
+                      >
+                        <SelectTrigger className="w-full bg-input border-border">
+                          <SelectValue
+                            placeholder={
+                              isLoadingOccupations ? "Loading..." : "Select your occupation"
+                            }
+                          />
+                        </SelectTrigger>
+
+                        <SelectContent className="max-h-75 overflow-y-auto" position="popper">
+                          {occupations?.map(o => (
+                            <SelectItem key={o.value} value={o.value}>
+                              {o.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+
+                  {errors.occupation && (
+                    <p className="text-destructive text-sm">{errors.occupation.message}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {currentStep === 8 && (
+              <div className="space-y-4">
+                {/* Country */}
+                <div className="space-y-2">
+                  <Label className="text-foreground font-medium text-sm">Country</Label>
+                  <Controller
+                    control={control}
+                    name="country"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isLoadingCountries}
+                      >
+                        <SelectTrigger className="w-full bg-input border-border">
+                          <SelectValue
+                            placeholder={isLoadingCountries ? "Loading..." : "Select your country"}
+                          />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-75 overflow-y-auto" position="popper">
+                          {countries.map(c => (
+                            <SelectItem key={c.value} value={c.value}>
+                              {c.label} ({c.code})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.country && (
+                    <p className="text-destructive text-sm">{errors.country.message}</p>
+                  )}
+                </div>
+
+                {/* Currency */}
+                <div className="space-y-2">
+                  <Label className="text-foreground font-medium text-sm">Preferred Currency</Label>
+                  <Controller
+                    control={control}
+                    name="currency"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isLoadingCurrencies}
+                      >
+                        <SelectTrigger className="w-full bg-input border-border">
+                          <SelectValue
+                            placeholder={
+                              isLoadingCurrencies ? "Loading..." : "Select your currency"
+                            }
+                          />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-75 overflow-y-auto" position="popper">
+                          {currencies.map(c => (
+                            <SelectItem key={c.value} value={c.value}>
+                              {c.label} ({c.symbol})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.currency && (
+                    <p className="text-destructive text-sm">{errors.currency.message}</p>
+                  )}
+                </div>
+
+                {/* Timezone */}
+                <div className="space-y-2">
+                  <Label className="text-foreground font-medium text-sm">Timezone</Label>
+                  <Controller
+                    control={control}
+                    name="timezone"
+                    render={({ field }) => (
+                      <Select
+                        value={field.value}
+                        onValueChange={field.onChange}
+                        disabled={isLoadingTimezones}
+                      >
+                        <SelectTrigger className="w-full bg-input border-border">
+                          <SelectValue
+                            placeholder={isLoadingTimezones ? "Loading..." : "Select your timezone"}
+                          />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-75 overflow-y-auto" position="popper">
+                          {timezones.map(t => (
+                            <SelectItem key={t.value} value={t.value}>
+                              {t.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  />
+                  {errors.timezone && (
+                    <p className="text-destructive text-sm">{errors.timezone.message}</p>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Navigation Buttons */}
             <div className="flex gap-3 mt-6">
               {currentStep > 1 && (
-                <Button
-                  type="button"
-                  onClick={handlePreviousStep}
-                  variant="outline"
-                  className="flex-1 border-border text-foreground hover:bg-muted bg-transparent"
-                >
-                  Back
-                </Button>
-              )}
-              {currentStep < 6 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="flex-1">
-                        <Button
-                          type="button"
-                          onClick={handleNextStep}
-                          disabled={!isStepValid}
-                          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isCheckingEmail || isCheckingUsername ? "Checking..." : "Next"}
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    {!isStepValid && (
-                      <TooltipContent>
-                        <p>{stepTooltipMessage[currentStep]}</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+                <div className="flex-1">
+                  <Button
+                    type="button"
+                    onClick={handlePreviousStep}
+                    variant="outline"
+                    className="w-full border-border text-foreground hover:bg-muted bg-transparent"
+                  >
+                    Back
+                  </Button>
+                </div>
               )}
 
-              {currentStep === 6 && (
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="flex-1">
-                        <Button
-                          type="submit"
-                          disabled={!isStepValid}
-                          className="w-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
-                        >
-                          Create Account
-                        </Button>
-                      </span>
-                    </TooltipTrigger>
-                    {!isStepValid && (
-                      <TooltipContent>
-                        <p>{stepTooltipMessage[6]}</p>
-                      </TooltipContent>
-                    )}
-                  </Tooltip>
-                </TooltipProvider>
+              {currentStep < 8 && (
+                <div className="flex-1">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="block w-full">
+                          <Button
+                            type="button"
+                            onClick={handleNextStep}
+                            disabled={!isStepValid}
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {isCheckingEmail || isCheckingUsername ? "Checking..." : "Next"}
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!isStepValid && (
+                        <TooltipContent>
+                          <p>{stepTooltipMessage[currentStep]}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
+              )}
+
+              {currentStep === 8 && (
+                <div className="flex-1">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="block w-full">
+                          <Button
+                            type="submit"
+                            disabled={!isStepValid}
+                            className="w-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                          >
+                            Create Account
+                          </Button>
+                        </span>
+                      </TooltipTrigger>
+                      {!isStepValid && (
+                        <TooltipContent>
+                          <p>{stepTooltipMessage[8]}</p>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
+                </div>
               )}
             </div>
           </form>
