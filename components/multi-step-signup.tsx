@@ -7,13 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -939,7 +933,7 @@ export default function MultiStepSignUp() {
         {/* Sign In Link */}
         <p className="text-center text-muted-foreground mt-6">
           Already have an account?{" "}
-          <Link href="/" className="text-primary hover:text-primary/90 font-medium">
+          <Link href="/signin" className="text-primary hover:text-primary/90 font-medium">
             Sign in
           </Link>
         </p>

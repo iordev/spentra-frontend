@@ -1,14 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "@/components/mode-toggle";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
-import { SignInForm } from "@/components/signin-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 
@@ -25,29 +16,20 @@ export function NavigationSection() {
             <span className="font-medium">Spentra</span>
           </div>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2">
           <ModeToggle />
 
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button variant="ghost">Sign In</Button>
-            </DialogTrigger>
-
-            <DialogContent className="sm:max-w-110 p-8">
-              <DialogTitle>
-                <VisuallyHidden>Sign in to Spentra</VisuallyHidden>
-              </DialogTitle>
-              <DialogDescription>
-                <VisuallyHidden>
-                  Use your email or continue with social login to sign in to Spentra.
-                </VisuallyHidden>
-              </DialogDescription>
-              <SignInForm />
-            </DialogContent>
-          </Dialog>
+          <Link href="/signin">
+            <Button
+              variant="ghost"
+              className="text-foreground hover:bg-accent hover:text-accent-foreground transition-colors"
+            >
+              Sign In
+            </Button>
+          </Link>
 
           <Link href="/signup">
-            <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+            <Button className="bg-primary text-primary-foreground hover:bg-primary/90 shadow-sm transition-all hover:shadow-md font-medium">
               Get Started
             </Button>
           </Link>

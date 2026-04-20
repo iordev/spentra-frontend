@@ -50,3 +50,31 @@ export interface RegisterFormData {
   gender: string;
   birthday: Date | null;
 }
+
+export interface LoginResponse {
+  id: number;
+  email: string;
+  username: string;
+  fullName: string;
+  firstName: string;
+  middleName: string | null;
+  lastName: string;
+  suffix: string | null;
+  birthDate: string;
+  gender: string;
+  avatarUrl: string | null;
+  theme: string;
+  emailVerified: boolean;
+  createdAt: string;
+  updatedAt: string;
+  role: {
+    id: number;
+    name: string;
+    description: string;
+    permissions: { id: number; name: string }[];
+  };
+  occupation: { id: number; name: string };
+  currency: { id: number; name: string; code: string; symbol: string };
+  timezone: { id: number; name: string };
+  country: { id: number; name: string; code: string };
+}
