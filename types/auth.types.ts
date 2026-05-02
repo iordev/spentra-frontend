@@ -39,16 +39,48 @@ export type TimezonesResponse = Timezone[];
 export type OccupationsResponse = Occupation[];
 
 export interface RegisterFormData {
+  // Step 1
+  email: string;
+  // Step 2
+  username: string;
+  // Step 3
+  password: string;
+  confirmPassword: string;
+  // Step 4
+  firstName: string;
+  lastName: string;
+  middleName?: string;
+  suffix?: string;
+  // Step 5
+  gender: string;
+  // Step 6
+  birthday: Date | null;
+  // Step 7
+  occupationId: number | null;
+  // Step 8
+  countryId: number | null;
+  currencyId: number | null;
+  timezoneId: number | null;
+}
+
+export interface RegisterDto {
   email: string;
   username: string;
   password: string;
-  confirmPassword: string;
   firstName: string;
   lastName: string;
   middleName?: string;
   suffix?: string;
   gender: string;
-  birthday: Date | null;
+  birthDate: string; // ISO string converted from Date
+  occupationId: number;
+  countryId: number;
+  currencyId: number;
+  timezoneId: number;
+}
+
+export interface RegisterResponse {
+  message: string;
 }
 
 export interface LoginResponse {

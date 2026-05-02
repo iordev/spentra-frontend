@@ -55,13 +55,13 @@ export const step6Schema = z.object({
 });
 
 export const step7Schema = z.object({
-  occupation: z.string().min(1, "Occupation is required."),
+  occupationId: z.number({ error: "Occupation is required." }).min(1, "Occupation is required."),
 });
 
 export const step8Schema = z.object({
-  country: z.string().min(1, "Country is required."),
-  currency: z.string().min(1, "Currency is required."),
-  timezone: z.string().min(1, "Timezone is required."),
+  countryId: z.number({ error: "Country is required." }).min(1, "Country is required."),
+  currencyId: z.number({ error: "Currency is required." }).min(1, "Currency is required."),
+  timezoneId: z.number({ error: "Timezone is required." }).min(1, "Timezone is required."),
 });
 
 // 2. Build the schema — no cast needed here
@@ -78,22 +78,7 @@ export const fullSchema = step1Schema
     path: ["confirmPassword"],
   });
 
-export type SignUpFormData = {
-  email: string;
-  username: string;
-  password: string;
-  confirmPassword: string;
-  firstName: string;
-  middleName?: string;
-  lastName: string;
-  suffix?: string;
-  gender: string;
-  birthday: Date;
-  occupation: string;
-  country: string;
-  currency: string;
-  timezone: string;
-};
+export type SignUpFormData = z.infer<typeof fullSchema>;
 
 export const signInSchema = z.object({
   identifier: z.string().min(1, "Email or username is required."),

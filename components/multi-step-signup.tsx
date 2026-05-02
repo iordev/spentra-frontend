@@ -7,7 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { ModeToggle } from "@/components/mode-toggle";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue, } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { format } from "date-fns";
 import { useRouter } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
@@ -37,6 +43,8 @@ import {
   step8Schema,
 } from "@/lib/schemas/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { RegisterDto } from "@/types/auth.types";
+import { authService } from "@/services/auth.service";
 
 const steps = [
   {
@@ -135,10 +143,10 @@ export default function MultiStepSignUp() {
       suffix: "",
       gender: "",
       birthday: undefined,
-      occupation: "",
-      country: "",
-      currency: "",
-      timezone: "",
+      occupationId: undefined,
+      countryId: undefined,
+      currencyId: undefined,
+      timezoneId: undefined,
     },
   });
   // 3. state
@@ -210,11 +218,11 @@ export default function MultiStepSignUp() {
   };
 
   const validateStep7 = async (): Promise<boolean> => {
-    return await trigger("occupation");
+    return await trigger("occupationId");
   };
 
   const validateStep8 = async (): Promise<boolean> => {
-    return await trigger(["country", "currency", "timezone"]);
+    return await trigger(["countryId", "currencyId", "timezoneId"]);
   };
 
   const stepValidators: Record<number, () => Promise<boolean>> = {
@@ -234,7 +242,6 @@ export default function MultiStepSignUp() {
     const schema = stepSchemas[currentStep];
     if (!schema) return true;
     const result = schema.safeParse(watchedValues);
-    console.log("isStepValid:", result, watchedValues);
     return result.success;
   }, [watchedValues, currentStep]);
 
@@ -269,11 +276,33 @@ export default function MultiStepSignUp() {
     if (currentStep > 1) setCurrentStep(prev => prev - 1);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle final submission
-    console.log("Sign up complete:", getValues());
-    router.push("/");
+
+    const values = getValues();
+
+    try {
+      const dto: RegisterDto = {
+        email: values.email,
+        username: values.username,
+        password: values.password,
+        firstName: values.firstName,
+        lastName: values.lastName,
+        middleName: values.middleName,
+        suffix: values.suffix,
+        gender: values.gender,
+        birthDate: values.birthday.toISOString(),
+        occupationId: values.occupationId!,
+        countryId: values.countryId!,
+        currencyId: values.currencyId!,
+        timezoneId: values.timezoneId!,
+      };
+
+      await authService.register(dto);
+      router.push(`/verify-email?email=${values.email}`);
+    } catch (error) {
+      console.error("Registration failed:", error);
+    }
   };
 
   return (
@@ -546,10 +575,10 @@ export default function MultiStepSignUp() {
                           <SelectValue placeholder="Select an option" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="male">Male</SelectItem>
-                          <SelectItem value="female">Female</SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
-                          <SelectItem value="prefer-not-to-say">Prefer not to say</SelectItem>
+                          <SelectItem value="MALE">Male</SelectItem>
+                          <SelectItem value="FEMALE">Female</SelectItem>
+                          <SelectItem value="OTHER">Other</SelectItem>
+                          <SelectItem value="PREFER_NOT_TO_SAY">Prefer not to say</SelectItem>
                         </SelectContent>
                       </Select>
                     )}
@@ -726,11 +755,11 @@ export default function MultiStepSignUp() {
 
                   <Controller
                     control={control}
-                    name="occupation"
+                    name="occupationId"
                     render={({ field }) => (
                       <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
+                        value={field.value?.toString() ?? ""}
+                        onValueChange={val => field.onChange(Number(val))}
                         disabled={isLoadingOccupations}
                       >
                         <SelectTrigger className="w-full bg-input border-border">
@@ -752,8 +781,8 @@ export default function MultiStepSignUp() {
                     )}
                   />
 
-                  {errors.occupation && (
-                    <p className="text-destructive text-sm">{errors.occupation.message}</p>
+                  {errors.occupationId && (
+                    <p className="text-destructive text-sm">{errors.occupationId.message}</p>
                   )}
                 </div>
               </div>
@@ -766,11 +795,11 @@ export default function MultiStepSignUp() {
                   <Label className="text-foreground font-medium text-sm">Country</Label>
                   <Controller
                     control={control}
-                    name="country"
+                    name="countryId"
                     render={({ field }) => (
                       <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
+                        value={field.value?.toString() ?? ""}
+                        onValueChange={val => field.onChange(Number(val))}
                         disabled={isLoadingCountries}
                       >
                         <SelectTrigger className="w-full bg-input border-border">
@@ -788,8 +817,8 @@ export default function MultiStepSignUp() {
                       </Select>
                     )}
                   />
-                  {errors.country && (
-                    <p className="text-destructive text-sm">{errors.country.message}</p>
+                  {errors.countryId && (
+                    <p className="text-destructive text-sm">{errors.countryId.message}</p>
                   )}
                 </div>
 
@@ -798,11 +827,11 @@ export default function MultiStepSignUp() {
                   <Label className="text-foreground font-medium text-sm">Preferred Currency</Label>
                   <Controller
                     control={control}
-                    name="currency"
+                    name="currencyId"
                     render={({ field }) => (
                       <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
+                        value={field.value?.toString() ?? ""}
+                        onValueChange={val => field.onChange(Number(val))}
                         disabled={isLoadingCurrencies}
                       >
                         <SelectTrigger className="w-full bg-input border-border">
@@ -822,8 +851,8 @@ export default function MultiStepSignUp() {
                       </Select>
                     )}
                   />
-                  {errors.currency && (
-                    <p className="text-destructive text-sm">{errors.currency.message}</p>
+                  {errors.currencyId && (
+                    <p className="text-destructive text-sm">{errors.currencyId.message}</p>
                   )}
                 </div>
 
@@ -832,11 +861,11 @@ export default function MultiStepSignUp() {
                   <Label className="text-foreground font-medium text-sm">Timezone</Label>
                   <Controller
                     control={control}
-                    name="timezone"
+                    name="timezoneId"
                     render={({ field }) => (
                       <Select
-                        value={field.value}
-                        onValueChange={field.onChange}
+                        value={field.value?.toString() ?? ""}
+                        onValueChange={val => field.onChange(Number(val))}
                         disabled={isLoadingTimezones}
                       >
                         <SelectTrigger className="w-full bg-input border-border">
@@ -854,8 +883,8 @@ export default function MultiStepSignUp() {
                       </Select>
                     )}
                   />
-                  {errors.timezone && (
-                    <p className="text-destructive text-sm">{errors.timezone.message}</p>
+                  {errors.timezoneId && (
+                    <p className="text-destructive text-sm">{errors.timezoneId.message}</p>
                   )}
                 </div>
               </div>

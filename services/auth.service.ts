@@ -6,6 +6,8 @@ import {
   CurrenciesResponse,
   LoginResponse,
   OccupationsResponse,
+  RegisterDto,
+  RegisterResponse,
   TimezonesResponse,
 } from "@/types/auth.types";
 
@@ -16,6 +18,18 @@ export const authService = {
       password,
     });
     return data.data;
+  },
+  register: async (dto: RegisterDto): Promise<RegisterResponse> => {
+    const { data } = await api.post<{ data: RegisterResponse }>("/auth/register", dto);
+    return data.data;
+  },
+
+  verifyEmail: async (token: string): Promise<void> => {
+    await api.post("/auth/verify-email", { token });
+  },
+
+  resendVerificationEmail: async (email: string): Promise<void> => {
+    await api.post("/auth/resend-verification", { email });
   },
 
   logout: async (): Promise<void> => {
