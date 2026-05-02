@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 
 const protectedRoutes = ["/overview", "/access-control", "/master-data", "/financial", "/settings"];
-const authRoutes = ["/signin", "/signup", "/forgot-password", "/reset-password", "/verify-email"];
+const authRoutes = [
+  "/signin",
+  "/signup",
+  "/register",
+  "/forgot-password",
+  "/reset-password",
+  "/verify-email",
+];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -41,6 +48,7 @@ export const config = {
     "/settings/:path*",
     "/signin",
     "/signup",
+    "/register",
     "/forgot-password",
     "/reset-password",
     "/verify-email",

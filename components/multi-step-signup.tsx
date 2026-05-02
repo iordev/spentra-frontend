@@ -15,8 +15,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { format } from "date-fns";
-import { useRouter } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import axios from "axios";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -43,43 +43,19 @@ import {
   step8Schema,
 } from "@/lib/schemas/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { RegisterDto } from "@/types/auth.types";
+import { OAuthRegisterDto, RegisterDto } from "@/types/auth.types";
 import { authService } from "@/services/auth.service";
 
-const steps = [
-  {
-    title: "Enter Your Email",
-    description: "We'll use this to verify your account",
-  },
-  {
-    title: "Choose Your Username",
-    description: "Create a unique username for your account",
-  },
-  {
-    title: "Create a Password",
-    description: "Make it strong and secure",
-  },
-  {
-    title: "Your Full Name",
-    description: "Help us personalize your experience",
-  },
-  {
-    title: "Tell Us About You",
-    description: "Gender information",
-  },
-  {
-    title: "Your Birthday",
-    description: "Complete your profile setup",
-  },
-  {
-    title: "Occupation",
-    description: "Tell us what you do",
-  },
-  {
-    title: "Set Your Preferences",
-    description: "Select your country, currency, timezone, and occupation",
-  },
-];
+const stepTitles: Record<number, { title: string; description: string }> = {
+  1: { title: "Enter Your Email", description: "We'll use this to verify your account" },
+  2: { title: "Choose Your Username", description: "Create a unique username for your account" },
+  3: { title: "Create a Password", description: "Make it strong and secure" },
+  4: { title: "Your Full Name", description: "Help us personalize your experience" },
+  5: { title: "Tell Us About You", description: "Gender information" },
+  6: { title: "Your Birthday", description: "Complete your profile setup" },
+  7: { title: "Occupation", description: "Tell us what you do" },
+  8: { title: "Set Your Preferences", description: "Select your country, currency, and timezone" },
+};
 
 const stepSchemas: Record<number, z.ZodTypeAny> = {
   1: step1Schema,
@@ -98,7 +74,27 @@ export default function MultiStepSignUp() {
   const { mutateAsync: checkEmail, isPending: isCheckingEmail } = useCheckEmail();
   const { mutateAsync: checkUsername, isPending: isCheckingUsername } = useCheckUsername();
 
-  const [currentStep, setCurrentStep] = useState(1);
+  const searchParams = useSearchParams();
+  const provider = searchParams.get("provider");
+  const isOAuth = !!provider;
+
+  // Pre-fill from OAuth query params
+  const oauthEmail = searchParams.get("email") ?? "";
+  const oauthFirstName = searchParams.get("firstName") ?? "";
+  const oauthLastName = searchParams.get("lastName") ?? "";
+  const oauthAvatarUrl = searchParams.get("avatarUrl") ?? "";
+
+  const regularSteps = [1, 2, 3, 4, 5, 6, 7, 8];
+  const oauthSteps = [2, 5, 6, 7, 8];
+  const activeSteps = isOAuth ? oauthSteps : regularSteps;
+  const totalSteps = activeSteps.length;
+
+  const [currentStep, setCurrentStep] = useState(() => activeSteps[0]);
+
+  const [isLoading, setIsLoading] = useState(false);
+  const [serverError, setServerError] = useState("");
+
+  const currentStepIndex = activeSteps.indexOf(currentStep);
 
   const { data: occupationsData, isLoading: isLoadingOccupations } = useGetOccupations(
     currentStep === 7
@@ -133,13 +129,13 @@ export default function MultiStepSignUp() {
   } = useForm<SignUpFormData>({
     resolver: zodResolver(fullSchema) as Resolver<SignUpFormData>, // ✅ cast here only
     defaultValues: {
-      email: "",
+      email: oauthEmail,
       username: "",
       password: "",
       confirmPassword: "",
-      firstName: "",
+      firstName: oauthFirstName,
       middleName: "",
-      lastName: "",
+      lastName: oauthLastName,
       suffix: "",
       gender: "",
       birthday: undefined,
@@ -269,44 +265,76 @@ export default function MultiStepSignUp() {
       const isValid = await validate();
       if (!isValid) return;
     }
-    if (currentStep < 8) setCurrentStep(prev => prev + 1);
+
+    const nextIndex = currentStepIndex + 1;
+    if (nextIndex < totalSteps) {
+      setCurrentStep(activeSteps[nextIndex]);
+    }
   };
 
   const handlePreviousStep = () => {
-    if (currentStep > 1) setCurrentStep(prev => prev - 1);
+    const prevIndex = currentStepIndex - 1;
+    if (prevIndex >= 0) {
+      setCurrentStep(activeSteps[prevIndex]);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     const values = getValues();
 
     try {
-      const dto: RegisterDto = {
-        email: values.email,
-        username: values.username,
-        password: values.password,
-        firstName: values.firstName,
-        lastName: values.lastName,
-        middleName: values.middleName,
-        suffix: values.suffix,
-        gender: values.gender,
-        birthDate: values.birthday.toISOString(),
-        occupationId: values.occupationId!,
-        countryId: values.countryId!,
-        currencyId: values.currencyId!,
-        timezoneId: values.timezoneId!,
-      };
-
-      await authService.register(dto);
-      router.push(`/verify-email?email=${values.email}`);
+      setIsLoading(true);
+      setServerError("");
+      if (isOAuth) {
+        const dto: OAuthRegisterDto = {
+          email: oauthEmail,
+          username: values.username,
+          firstName: oauthFirstName,
+          lastName: oauthLastName,
+          avatarUrl: oauthAvatarUrl || undefined,
+          gender: values.gender,
+          birthDate: values.birthday.toISOString(),
+          occupationId: values.occupationId!,
+          countryId: values.countryId!,
+          currencyId: values.currencyId!,
+          timezoneId: values.timezoneId!,
+          provider: provider!,
+        };
+        await authService.oauthRegister(dto);
+        router.push("/overview/dashboard");
+      } else {
+        const dto: RegisterDto = {
+          email: values.email,
+          username: values.username,
+          password: values.password,
+          firstName: values.firstName,
+          lastName: values.lastName,
+          middleName: values.middleName,
+          suffix: values.suffix,
+          gender: values.gender,
+          birthDate: values.birthday.toISOString(),
+          occupationId: values.occupationId!,
+          countryId: values.countryId!,
+          currencyId: values.currencyId!,
+          timezoneId: values.timezoneId!,
+        };
+        await authService.register(dto);
+        router.push(`/verify-email?email=${values.email}`);
+      }
     } catch (error) {
-      console.error("Registration failed:", error);
+      setServerError(
+        axios.isAxiosError(error)
+          ? (error.response?.data?.message ?? "Something went wrong. Please try again.")
+          : "Something went wrong. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center bg-background px-4 py-4">
+    <div className="relative min-h-screen flex items-center justify-center bg-background px-4 py-2 sm:py-4">
       {/* Top bar: back button left, mode toggle right */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
         <Button variant="ghost" size="sm" asChild>
@@ -318,9 +346,9 @@ export default function MultiStepSignUp() {
         <ModeToggle />
       </div>
 
-      <div className="w-full max-w-md pt-20">
+      <div className="w-full max-w-md pt-5 sm:pt-20">
         {/* Header */}
-        <div className="mb-8 text-center">
+        <div className="mb-4 sm:mb-8 text-center">
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8 rounded-lg">
@@ -339,13 +367,13 @@ export default function MultiStepSignUp() {
         {/* Progress Indicator */}
         <div className="mb-6">
           <div className="flex justify-between items-center gap-2">
-            {steps.map((_, index) => (
+            {activeSteps.map((_, index) => (
               <div
                 key={index}
                 className={`h-2 flex-1 rounded-full transition-colors ${
-                  index < currentStep
+                  index < currentStepIndex
                     ? "bg-primary"
-                    : index === currentStep - 1
+                    : index === currentStepIndex
                       ? "bg-primary"
                       : "bg-muted"
                 }`}
@@ -353,18 +381,20 @@ export default function MultiStepSignUp() {
             ))}
           </div>
           <p className="text-center text-sm text-muted-foreground mt-3">
-            Step {currentStep} of {steps.length}
+            Step {currentStepIndex + 1} of {totalSteps}
           </p>
         </div>
 
         {/* Form Card */}
         <div className="rounded-2xl bg-card border border-border p-8 shadow-sm">
-          <form onSubmit={currentStep === 8 ? handleSubmit : e => e.preventDefault()}>
+          <form
+            onSubmit={currentStepIndex === totalSteps - 1 ? handleSubmit : e => e.preventDefault()}
+          >
             {/* Step Title */}
             <div className="mb-4">
-              <h2 className="text-xl font-bold text-foreground">{steps[currentStep - 1].title}</h2>
+              <h2 className="text-xl font-bold text-foreground">{stepTitles[currentStep].title}</h2>
               <p className="text-sm text-muted-foreground mt-1">
-                {steps[currentStep - 1].description}
+                {stepTitles[currentStep].description}
               </p>
             </div>
 
@@ -890,9 +920,19 @@ export default function MultiStepSignUp() {
               </div>
             )}
 
+            {currentStepIndex === totalSteps - 1 && serverError && (
+              <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 flex items-start gap-3 mt-4">
+                <AlertCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <div className="flex flex-col gap-0.5">
+                  <p className="text-sm font-semibold text-destructive">Registration failed.</p>
+                  <p className="text-sm text-destructive/80">{serverError}</p>
+                </div>
+              </div>
+            )}
+
             {/* Navigation Buttons */}
             <div className="flex gap-3 mt-6">
-              {currentStep > 1 && (
+              {currentStepIndex > 0 && (
                 <div className="flex-1">
                   <Button
                     type="button"
@@ -905,7 +945,7 @@ export default function MultiStepSignUp() {
                 </div>
               )}
 
-              {currentStep < 8 && (
+              {currentStepIndex < totalSteps - 1 && (
                 <div className="flex-1">
                   <TooltipProvider>
                     <Tooltip>
@@ -931,7 +971,7 @@ export default function MultiStepSignUp() {
                 </div>
               )}
 
-              {currentStep === 8 && (
+              {currentStepIndex === totalSteps - 1 && (
                 <div className="flex-1">
                   <TooltipProvider>
                     <Tooltip>
@@ -939,16 +979,23 @@ export default function MultiStepSignUp() {
                         <span className="block w-full">
                           <Button
                             type="submit"
-                            disabled={!isStepValid}
+                            disabled={!isStepValid || isLoading}
                             className="w-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed font-medium"
                           >
-                            Create Account
+                            {isLoading ? (
+                              <>
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                Creating Account...
+                              </>
+                            ) : (
+                              "Create Account"
+                            )}
                           </Button>
                         </span>
                       </TooltipTrigger>
                       {!isStepValid && (
                         <TooltipContent>
-                          <p>{stepTooltipMessage[8]}</p>
+                          <p>{stepTooltipMessage[currentStep]}</p>
                         </TooltipContent>
                       )}
                     </Tooltip>

@@ -1,7 +1,13 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldGroup, FieldLabel, FieldSeparator, } from "@/components/ui/field";
+import {
+  Field,
+  FieldDescription,
+  FieldGroup,
+  FieldLabel,
+  FieldSeparator,
+} from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "@/components/mode-toggle"; // adjust path if needed
@@ -14,6 +20,8 @@ import axios from "axios";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SignInFormData, signInSchema } from "@/lib/schemas/auth.schema";
 import { useForm } from "react-hook-form";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { useAuthStore } from "@/store/auth.store";
 
 export function SignInForm({ className, ...props }: React.ComponentProps<"div">) {
   const router = useRouter();
@@ -45,7 +53,8 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
     setServerError("");
 
     try {
-      await authService.login(formData.identifier, formData.password);
+      const user = await authService.login(formData.identifier, formData.password);
+      useAuthStore.getState().setUser(user);
       router.push("/overview/dashboard");
     } catch (err) {
       if (axios.isAxiosError(err)) {
@@ -62,7 +71,7 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
   return (
     <div
       className={cn(
-        "relative min-h-screen flex items-center justify-center bg-background px-4 py-4",
+        "relative min-h-screen flex items-center justify-center bg-background px-4 py-2 sm:py-4",
         className
       )}
       {...props}
@@ -78,9 +87,9 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
         <ModeToggle />
       </div>
 
-      <div className="w-full max-w-md pt-20">
+      <div className="w-full max-w-md pt-5 sm:pt-20">
         {/* Header */}
-        <div className="mb-8 text-center">
+        <div className="mb-4 sm:mb-8 text-center">
           <div className="flex justify-center mb-4">
             <div className="flex items-center gap-2">
               <Avatar className="h-8 w-8 rounded-lg">
@@ -96,7 +105,6 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
           <p className="text-muted-foreground mt-2">Sign in to your account to continue</p>
         </div>
 
-        {/* Original Sign In Form — untouched */}
         <div className={cn("flex flex-col gap-5")}>
           <form onSubmit={handleSubmit(onSubmit)}>
             <FieldGroup>
@@ -104,10 +112,10 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
               {serverError && (
                 <div className="rounded-lg bg-destructive/10 border border-destructive/20 px-4 py-3 flex items-center gap-3">
                   <AlertCircle className="h-4 w-4 text-destructive shrink-0" />
-                  <p className="text-sm text-destructive">
-                    <span className="font-semibold">Sign in failed.</span>{" "}
-                    <span className="text-destructive/80">{serverError}</span>
-                  </p>
+                  <div className="flex flex-col gap-0.5">
+                    <p className="text-sm font-semibold text-destructive">Sign in failed.</p>
+                    <p className="text-sm text-destructive/80">{serverError}</p>
+                  </div>
                 </div>
               )}
               <Field>
@@ -140,6 +148,11 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
                   id="password"
                   type="password"
                   disabled={isLoading}
+                  onKeyDown={e => {
+                    if (e.key === "Enter") {
+                      void handleSubmit(onSubmit)();
+                    }
+                  }}
                   {...register("password")}
                 />
                 {errors.password && (
@@ -162,39 +175,70 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
                 Or continue with
               </FieldSeparator>
               <Field className="grid grid-cols-3 gap-4">
-                <Button variant="outline" type="button">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5"
-                    fill="currentColor"
-                  >
-                    <path d="M21.35 11.1H12v3.7h5.38c-.23 1.2-1.42 3.52-5.38 3.52-3.24 0-5.89-2.68-5.89-5.99s2.65-5.99 5.89-5.99c1.85 0 3.09.79 3.8 1.47l2.59-2.49C16.81 3.77 14.6 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12S6.92 21.2 12 21.2c6.93 0 8.63-4.86 8.63-7.38 0-.5-.05-.87-.12-1.22z" />
-                  </svg>
-                  <span className="sr-only">Sign in with Google</span>
-                </Button>
-                <Button variant="outline" type="button">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5"
-                    fill="currentColor"
-                  >
-                    <path d="M2 2h9v9H2zM13 2h9v9h-9zM2 13h9v9H2zM13 13h9v9h-9z" />
-                  </svg>
-                  <span className="sr-only">Sign in with Microsoft</span>
-                </Button>
-                <Button variant="outline" type="button">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    className="h-5 w-5"
-                    fill="currentColor"
-                  >
-                    <path d="M22.68 0H1.32C.59 0 0 .6 0 1.33v21.35C0 23.4.59 24 1.32 24h11.5v-9.29H9.69v-3.62h3.13V8.41c0-3.1 1.89-4.79 4.66-4.79 1.32 0 2.46.1 2.79.14v3.24h-1.92c-1.5 0-1.79.72-1.79 1.76v2.31h3.59l-.47 3.62h-3.12V24h6.12c.73 0 1.32-.6 1.32-1.32V1.33C24 .6 23.41 0 22.68 0z" />
-                  </svg>
-                  <span className="sr-only">Sign in with Facebook</span>
-                </Button>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => authService.googleLogin()}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5"
+                          fill="currentColor"
+                        >
+                          <path d="M21.35 11.1H12v3.7h5.38c-.23 1.2-1.42 3.52-5.38 3.52-3.24 0-5.89-2.68-5.89-5.99s2.65-5.99 5.89-5.99c1.85 0 3.09.79 3.8 1.47l2.59-2.49C16.81 3.77 14.6 2.8 12 2.8 6.92 2.8 2.8 6.92 2.8 12S6.92 21.2 12 21.2c6.93 0 8.63-4.86 8.63-7.38 0-.5-.05-.87-.12-1.22z" />
+                        </svg>
+                        <span className="sr-only">Sign in with Google</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Sign in with Google</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => authService.microsoftLogin()}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5"
+                          fill="currentColor"
+                        >
+                          <path d="M2 2h9v9H2zM13 2h9v9h-9zM2 13h9v9H2zM13 13h9v9h-9z" />
+                        </svg>
+                        <span className="sr-only">Sign in with Microsoft</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Sign in with Microsoft</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        type="button"
+                        onClick={() => authService.facebookLogin()}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5"
+                          fill="currentColor"
+                        >
+                          <path d="M22.68 0H1.32C.59 0 0 .6 0 1.33v21.35C0 23.4.59 24 1.32 24h11.5v-9.29H9.69v-3.62h3.13V8.41c0-3.1 1.89-4.79 4.66-4.79 1.32 0 2.46.1 2.79.14v3.24h-1.92c-1.5 0-1.79.72-1.79 1.76v2.31h3.59l-.47 3.62h-3.12V24h6.12c.73 0 1.32-.6 1.32-1.32V1.33C24 .6 23.41 0 22.68 0z" />
+                        </svg>
+                        <span className="sr-only">Sign in with Facebook</span>
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Sign in with Facebook</TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
               </Field>
             </FieldGroup>
           </form>

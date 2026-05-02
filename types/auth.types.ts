@@ -79,6 +79,21 @@ export interface RegisterDto {
   timezoneId: number;
 }
 
+export interface OAuthRegisterDto {
+  email: string;
+  username: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl?: string;
+  gender: string;
+  birthDate: string;
+  occupationId: number;
+  countryId: number;
+  currencyId: number;
+  timezoneId: number;
+  provider: string;
+}
+
 export interface RegisterResponse {
   message: string;
 }
@@ -97,6 +112,7 @@ export interface LoginResponse {
   avatarUrl: string | null;
   theme: string;
   emailVerified: boolean;
+  isOnboarded: boolean;
   createdAt: string;
   updatedAt: string;
   role: {

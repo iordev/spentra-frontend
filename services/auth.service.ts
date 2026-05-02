@@ -1,10 +1,11 @@
-import api from "@/lib/public-api";
+import api from "../lib/api";
 import {
   CheckEmailResponse,
   CheckUsernameResponse,
   CountriesResponse,
   CurrenciesResponse,
   LoginResponse,
+  OAuthRegisterDto,
   OccupationsResponse,
   RegisterDto,
   RegisterResponse,
@@ -22,6 +23,22 @@ export const authService = {
   register: async (dto: RegisterDto): Promise<RegisterResponse> => {
     const { data } = await api.post<{ data: RegisterResponse }>("/auth/register", dto);
     return data.data;
+  },
+
+  oauthRegister: async (dto: OAuthRegisterDto): Promise<void> => {
+    await api.post("/auth/oauth-register", dto);
+  },
+
+  microsoftLogin: () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/microsoft`;
+  },
+
+  googleLogin: () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/google`;
+  },
+
+  facebookLogin: () => {
+    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/facebook`;
   },
 
   verifyEmail: async (token: string): Promise<void> => {
