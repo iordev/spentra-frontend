@@ -1,19 +1,19 @@
 "use client";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ModeToggle } from "@/components/mode-toggle";
+import { cn } from "lib/utils";
+import { Button } from "components/ui/button";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "components/ui/field";
+import { Input } from "components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "components/ui/avatar";
+import { ModeToggle } from "components/mode-toggle";
 import { AlertCircle, ArrowLeft, CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { authService } from "@/services/auth.service";
+import { authService } from "services/auth.service";
 import axios from "axios";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ResetPasswordFormData, resetPasswordSchema } from "@/lib/schemas/auth.schema";
+import { ResetPasswordFormData, resetPasswordSchema } from "lib/schemas/auth.schema";
 
 export function ResetPasswordForm({ className, ...props }: React.ComponentProps<"div">) {
   const router = useRouter();

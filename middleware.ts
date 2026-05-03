@@ -8,6 +8,7 @@ const authRoutes = [
   "/forgot-password",
   "/reset-password",
   "/verify-email",
+  "/oauth/callback",
 ];
 
 export function middleware(request: NextRequest) {
@@ -52,5 +53,6 @@ export const config = {
     "/forgot-password",
     "/reset-password",
     "/verify-email",
+    "/oauth/callback",
   ],
 };

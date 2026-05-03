@@ -4,18 +4,35 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useEffect, useState } from "react";
 import { useAuthStore } from "@/store/auth.store";
 import { WelcomeModal } from "@/components/dashboard/welcome-modal";
+import { authService } from "@/services/auth.service";
+import { useRouter } from "next/navigation";
 
 const ViewDashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const user = useAuthStore(state => state.user);
+  const setUser = useAuthStore(state => state.setUser);
+  const router = useRouter();
 
-  // Derive showWelcome directly — no useEffect needed
   const [welcomeDismissed, setWelcomeDismissed] = useState(false);
   const showWelcome = !loading && !!user && !user.isOnboarded && !welcomeDismissed;
 
   useEffect(() => {
-    const timer = setTimeout(() => setLoading(false), 5000);
-    return () => clearTimeout(timer);
+    const init = async () => {
+      // If no user in store (e.g. OAuth redirect), fetch from /auth/me
+      if (!user) {
+        try {
+          const data = await authService.me();
+          setUser(data);
+        } catch {
+          router.replace("/signin");
+          return;
+        }
+      }
+      // Simulate loading
+      setTimeout(() => setLoading(false), 1500);
+    };
+
+    void init();
   }, []);
 
   if (loading) {

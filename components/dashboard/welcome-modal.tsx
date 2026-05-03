@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { userService } from "@/services/user.service";
 import {
@@ -13,8 +13,11 @@ import {
   ArrowRight,
   ChevronLeft,
   X,
+  ImageIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
+import Image from "next/image";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 interface WelcomeModalProps {
   open: boolean;
@@ -30,6 +33,7 @@ const tutorialSteps = [
       "Your personal finance companion is ready. Let's take a quick tour to help you get the most out of Spentra.",
     color: "text-primary",
     bg: "bg-primary/10",
+    image: null, // replace with "/images/onboarding/welcome.png"
   },
   {
     icon: Wallet,
@@ -38,6 +42,7 @@ const tutorialSteps = [
       "Log your daily expenses in seconds. Categorize them automatically and see where your money goes each month.",
     color: "text-emerald-500",
     bg: "bg-emerald-500/10",
+    image: null, // replace with "/images/onboarding/expenses.png"
   },
   {
     icon: Target,
@@ -46,6 +51,7 @@ const tutorialSteps = [
       "Create monthly budgets for different categories. Spentra will alert you when you're getting close to your limits.",
     color: "text-blue-500",
     bg: "bg-blue-500/10",
+    image: null, // replace with "/images/onboarding/budget.png"
   },
   {
     icon: BarChart3,
@@ -54,6 +60,7 @@ const tutorialSteps = [
       "Beautiful charts and reports give you a clear picture of your spending habits and financial trends over time.",
     color: "text-violet-500",
     bg: "bg-violet-500/10",
+    image: null, // replace with "/images/onboarding/charts.png"
   },
   {
     icon: Bell,
@@ -62,6 +69,7 @@ const tutorialSteps = [
       "Get smart notifications and insights to help you reach your financial goals. You're all set — let's get started!",
     color: "text-amber-500",
     bg: "bg-amber-500/10",
+    image: null, // replace with "/images/onboarding/notifications.png"
   },
 ];
 
@@ -80,13 +88,11 @@ export function WelcomeModal({ open, onComplete, firstName }: WelcomeModalProps)
     setIsCompleting(true);
     try {
       await userService.completeOnboarding();
-      // Update user in store so modal doesn't show again
       if (user) {
         setUser({ ...user, isOnboarded: true });
       }
       onComplete();
     } catch {
-      // Still close modal even if API fails
       onComplete();
     } finally {
       setIsCompleting(false);
@@ -101,8 +107,12 @@ export function WelcomeModal({ open, onComplete, firstName }: WelcomeModalProps)
     <Dialog open={open} onOpenChange={() => {}}>
       <DialogContent
         className="sm:max-w-md p-0 gap-0 overflow-hidden"
-        onInteractOutside={e => e.preventDefault()} // prevent closing by clicking outside
+        onInteractOutside={e => e.preventDefault()}
       >
+        <VisuallyHidden>
+          <DialogTitle>Welcome to Spentra</DialogTitle>
+          <DialogDescription>A quick tour of Spentra features</DialogDescription>
+        </VisuallyHidden>
         {/* Skip button */}
         <button
           onClick={handleSkip}
@@ -120,13 +130,31 @@ export function WelcomeModal({ open, onComplete, firstName }: WelcomeModalProps)
           />
         </div>
 
-        {/* Content */}
-        <div className="p-8 flex flex-col items-center text-center gap-6">
-          {/* Icon */}
-          <div className={`rounded-2xl p-5 ${step.bg} transition-all duration-300`}>
-            <Icon className={`h-10 w-10 ${step.color} transition-all duration-300`} />
-          </div>
+        {/* Image / Placeholder */}
+        <div className="w-full h-52 bg-muted relative overflow-hidden">
+          {step.image ? (
+            <Image
+              src={step.image}
+              alt={step.title}
+              fill
+              className="object-cover transition-all duration-300"
+            />
+          ) : (
+            // Placeholder — replace image: null with actual path when ready
+            <div className="w-full h-full flex flex-col items-center justify-center gap-2">
+              <div className={`rounded-2xl p-4 ${step.bg}`}>
+                <Icon className={`h-10 w-10 ${step.color}`} />
+              </div>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <ImageIcon className="h-3 w-3" />
+                <span>Image placeholder — {step.title}</span>
+              </div>
+            </div>
+          )}
+        </div>
 
+        {/* Content */}
+        <div className="p-6 flex flex-col items-center text-center gap-5">
           {/* Text */}
           <div className="space-y-2">
             <h2 className="text-xl font-bold text-foreground">

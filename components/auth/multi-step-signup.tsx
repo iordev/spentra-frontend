@@ -2,24 +2,24 @@
 
 import type React from "react";
 import { useMemo, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button } from "components/ui/button";
+import { Input } from "components/ui/input";
+import { Label } from "components/ui/label";
 import Link from "next/link";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "components/mode-toggle";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
+} from "components/ui/select";
 import { format } from "date-fns";
 import { useRouter, useSearchParams } from "next/navigation";
 import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "components/ui/avatar";
 import axios from "axios";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "components/ui/tooltip";
 import {
   useCheckEmail,
   useCheckUsername,
@@ -27,7 +27,7 @@ import {
   useGetCurrencies,
   useGetOccupations,
   useGetTimezones,
-} from "@/hooks/useAuth";
+} from "hooks/useAuth";
 import { Controller, Resolver, useForm, useWatch } from "react-hook-form";
 import { z } from "zod";
 import {
@@ -41,10 +41,11 @@ import {
   step6Schema,
   step7Schema,
   step8Schema,
-} from "@/lib/schemas/auth.schema";
+} from "lib/schemas/auth.schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { OAuthRegisterDto, RegisterDto } from "@/types/auth.types";
-import { authService } from "@/services/auth.service";
+import { OAuthRegisterDto, RegisterDto } from "types/auth.types";
+import { authService } from "services/auth.service";
+import { useAuthStore } from "store/auth.store";
 
 const stepTitles: Record<number, { title: string; description: string }> = {
   1: { title: "Enter Your Email", description: "We'll use this to verify your account" },
@@ -301,7 +302,8 @@ export default function MultiStepSignUp() {
           timezoneId: values.timezoneId!,
           provider: provider!,
         };
-        await authService.oauthRegister(dto);
+        const response = await authService.oauthRegister(dto);
+        useAuthStore.getState().setUser(response);
         router.push("/overview/dashboard");
       } else {
         const dto: RegisterDto = {
@@ -338,7 +340,7 @@ export default function MultiStepSignUp() {
       {/* Top bar: back button left, mode toggle right */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/">
+          <Link href="/public">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Home
           </Link>

@@ -22,6 +22,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { authService } from "@/services/auth.service";
 import axios from "axios";
+import { useAuthStore } from "@/store/auth.store";
 
 export function NavUser({
   user,
@@ -40,14 +41,14 @@ export function NavUser({
     setIsLoggingOut(true);
     try {
       await authService.logout();
-      router.replace("/signin"); // ← replace instead of push
     } catch (err) {
       if (axios.isAxiosError(err)) {
         console.error("Logout failed:", err.response?.data?.message);
       }
-      router.replace("/signin"); // ← replace instead of push
     } finally {
+      useAuthStore.getState().clearUser();
       setIsLoggingOut(false);
+      router.replace("/signin");
     }
   };
   return (

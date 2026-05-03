@@ -25,8 +25,9 @@ export const authService = {
     return data.data;
   },
 
-  oauthRegister: async (dto: OAuthRegisterDto): Promise<void> => {
-    await api.post("/auth/oauth-register", dto);
+  oauthRegister: async (dto: OAuthRegisterDto): Promise<LoginResponse> => {
+    const { data } = await api.post<{ data: LoginResponse }>("/auth/oauth-register", dto);
+    return data.data;
   },
 
   microsoftLogin: () => {
@@ -41,6 +42,11 @@ export const authService = {
     window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/auth/facebook`;
   },
 
+  exchangeOAuthToken: async (token: string): Promise<LoginResponse> => {
+    const { data } = await api.get<{ data: LoginResponse }>(`/auth/oauth/exchange?token=${token}`);
+    return data.data;
+  },
+
   verifyEmail: async (token: string): Promise<void> => {
     await api.post("/auth/verify-email", { token });
   },
@@ -49,8 +55,15 @@ export const authService = {
     await api.post("/auth/resend-verification", { email });
   },
 
+  me: async (): Promise<LoginResponse> => {
+    const { data } = await api.get<{ data: LoginResponse }>("/auth/me");
+    return data.data;
+  },
+
   logout: async (): Promise<void> => {
-    await api.post("/auth/logout");
+    try {
+      await api.post("/auth/logout");
+    } catch {}
   },
 
   forgotPassword: async (email: string): Promise<void> => {

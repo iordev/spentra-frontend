@@ -1,6 +1,4 @@
 "use client";
-import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
 import {
   Field,
   FieldDescription,
@@ -8,7 +6,6 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ModeToggle } from "@/components/mode-toggle"; // adjust path if needed
 import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
@@ -22,6 +19,9 @@ import { SignInFormData, signInSchema } from "@/lib/schemas/auth.schema";
 import { useForm } from "react-hook-form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useAuthStore } from "@/store/auth.store";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export function SignInForm({ className, ...props }: React.ComponentProps<"div">) {
   const router = useRouter();
@@ -79,7 +79,7 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
       {/* Top bar: back button left, mode toggle right */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/">
+          <Link href="/public">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Home
           </Link>
