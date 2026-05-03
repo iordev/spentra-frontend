@@ -1,11 +1,11 @@
 "use client";
-import { cn } from "lib/utils";
-import { Button } from "components/ui/button";
-import { Avatar, AvatarFallback, AvatarImage } from "components/ui/avatar";
-import { ModeToggle } from "components/mode-toggle";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ModeToggle } from "@/components/mode-toggle";
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, MailCheck } from "lucide-react";
 import Link from "next/link";
-import { authService } from "services/auth.service";
+import { authService } from "@/services/auth.service";
 import axios from "axios";
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";

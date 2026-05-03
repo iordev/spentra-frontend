@@ -1,18 +1,18 @@
 "use client";
-import { cn } from "lib/utils";
-import { Button } from "components/ui/button";
-import { Field, FieldDescription, FieldGroup, FieldLabel } from "components/ui/field";
-import { Input } from "components/ui/input";
-import { Avatar, AvatarFallback, AvatarImage } from "components/ui/avatar";
-import { ModeToggle } from "components/mode-toggle";
+import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+import { Field, FieldDescription, FieldGroup, FieldLabel } from "@/components/ui/field";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ModeToggle } from "@/components/mode-toggle";
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { authService } from "services/auth.service";
+import { authService } from "@/services/auth.service";
 import axios from "axios";
 import { useState } from "react";
-import { ForgotPasswordFormData, forgotPasswordSchema } from "lib/schemas/auth.schema";
+import { ForgotPasswordFormData, forgotPasswordSchema } from "@/lib/schemas/auth.schema";
 
 export function ForgotPasswordForm({ className, ...props }: React.ComponentProps<"div">) {
   const [isLoading, setIsLoading] = useState(false);
@@ -119,7 +119,7 @@ export function ForgotPasswordForm({ className, ...props }: React.ComponentProps
                 </p>
                 <p className="text-sm font-medium text-foreground mt-0.5">{sentEmail}</p>
                 <p className="text-xs text-muted-foreground mt-3">
-                  The link expires in <span className="font-medium">15 minutes</span>. Didn't
+                  The link expires in <span className="font-medium">15 minutes</span>. Didn&#39;t
                   receive it? Check your spam folder.
                 </p>
               </div>
