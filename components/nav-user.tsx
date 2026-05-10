@@ -1,7 +1,6 @@
 "use client";
 
 import { BadgeCheck, Bell, ChevronsUpDown, LogOut } from "lucide-react";
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -24,6 +23,17 @@ import { authService } from "@/services/auth.service";
 import axios from "axios";
 import { useAuthStore } from "@/store/auth.store";
 
+// ─── Helper ───────────────────────────────────────────────────────────────────
+
+const getInitials = (fullName: string): string => {
+  const parts = fullName.trim().split(" ").filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0][0].toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+};
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
 export function NavUser({
   user,
 }: {
@@ -36,6 +46,8 @@ export function NavUser({
   const { isMobile } = useSidebar();
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const initials = getInitials(user.name);
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
@@ -51,6 +63,7 @@ export function NavUser({
       router.replace("/signin");
     }
   };
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -62,8 +75,10 @@ export function NavUser({
               tooltip={user.name}
             >
               <Avatar className="h-8 w-8 rounded-lg">
-                <AvatarImage src={user.avatar} alt={user.name} />
-                <AvatarFallback className="rounded-lg">ST</AvatarFallback>
+                {user.avatar ? <AvatarImage src={user.avatar} alt={user.name} /> : null}
+                <AvatarFallback className="rounded-lg">
+                  {initials} {/* ← dynamic initials */}
+                </AvatarFallback>
               </Avatar>
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
@@ -72,6 +87,7 @@ export function NavUser({
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
@@ -81,8 +97,10 @@ export function NavUser({
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar className="h-8 w-8 rounded-lg">
-                  <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                  {user.avatar ? <AvatarImage src={user.avatar} alt={user.name} /> : null}
+                  <AvatarFallback className="rounded-lg">
+                    {initials} {/* ← dynamic initials */}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="grid flex-1 text-left text-sm leading-tight">
                   <span className="truncate font-medium">{user.name}</span>
@@ -90,7 +108,9 @@ export function NavUser({
                 </div>
               </div>
             </DropdownMenuLabel>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuGroup>
               <DropdownMenuItem>
                 <BadgeCheck />
@@ -101,7 +121,9 @@ export function NavUser({
                 Notifications
               </DropdownMenuItem>
             </DropdownMenuGroup>
+
             <DropdownMenuSeparator />
+
             <DropdownMenuItem
               onClick={handleLogout}
               disabled={isLoggingOut}

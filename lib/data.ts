@@ -13,7 +13,25 @@ import {
   PiggyBank,
   Calendar,
   FileChartColumnIncreasing,
+  LucideIcon,
+  BadgeDollarSign,
+  Clock,
+  Globe,
+  BriefcaseBusiness,
 } from "lucide-react";
+
+export type NavItem = {
+  title: string;
+  url: string;
+  icon: LucideIcon;
+  permissions?: string[]; // undefined = visible to all
+  subItems?: { title: string; url: string }[];
+};
+
+export type NavGroup = {
+  title: string;
+  items: NavItem[];
+};
 
 // User information
 export const user = {
@@ -31,13 +49,14 @@ export const navOverview = [
         title: "Dashboard",
         url: "/overview/dashboard",
         icon: LayoutDashboard,
+        // permissions: ["dashboard:display"],
       },
     ],
   },
 ];
 
 // Access control section
-export const navAccessControl = [
+export const navAccessControl: NavGroup[] = [
   {
     title: "Access Control",
     items: [
@@ -45,28 +64,34 @@ export const navAccessControl = [
         title: "User Management",
         url: "/access-control/user-management",
         icon: Users,
+        permissions: ["user:display"],
       },
       {
         title: "Role Management",
         url: "/access-control/role-management",
         icon: Shield,
+        permissions: ["role:display"],
       },
       {
         title: "Permission Management",
         url: "/access-control/permission-management",
         icon: ListCheck,
+        permissions: ["permission:display"],
       },
       {
         title: "Access Key Management",
         url: "/access-control/access-key-management",
         icon: Key,
+        permissions: ["permission:display"],
       },
     ],
   },
 ];
 
 // Master data section
-export const navMasterData = [
+// ─── Master Data ──────────────────────────────────────────────────────────────
+
+export const navMasterData: NavGroup[] = [
   {
     title: "Master Data",
     items: [
@@ -74,30 +99,64 @@ export const navMasterData = [
         title: "Expense Category",
         url: "/master-data/expense-category",
         icon: DollarSign,
+        permissions: ["expense_category:display"],
       },
       {
         title: "Income Source",
         url: "/master-data/income-source",
         icon: TrendingUp,
+        permissions: ["income_source:display"],
       },
       {
         title: "Payment Method",
         url: "/master-data/payment-method",
         icon: CreditCard,
+        permissions: ["payment_method:display"],
       },
       {
         title: "Bank",
         url: "/master-data/bank",
         icon: Wallet,
+        permissions: ["bank:display"],
+      },
+      {
+        title: "Occupation",
+        url: "/master-data/occupation",
+        icon: BriefcaseBusiness,
+        permissions: ["occupation:display"],
+      },
+      {
+        title: "Country",
+        url: "/master-data/country",
+        icon: Globe,
+        permissions: ["country:display"],
+      },
+      {
+        title: "Currency",
+        url: "/master-data/currency",
+        icon: BadgeDollarSign,
+        permissions: ["currency:display"],
+      },
+      {
+        title: "Timezone",
+        url: "/master-data/timezone",
+        icon: Clock,
+        permissions: ["timezone:display"],
+      },
+      {
+        title: "Report Template",
+        url: "/master-data/report-template",
+        icon: FileChartColumnIncreasing,
+        permissions: ["report_template:display"],
       },
     ],
   },
 ];
 
 // Financials section
-export const navFinancials = [
+export const navFinancials: NavGroup[] = [
   {
-    title: "Financial",
+    title: "Financial", // ← group title
     items: [
       {
         title: "Expense Management",
@@ -118,20 +177,7 @@ export const navFinancials = [
         title: "Reports",
         url: "/financial/report-management",
         icon: FileChartColumnIncreasing,
-        subItems: [
-          {
-            title: "Expense Report",
-            url: "/financial/report-management/expense-report",
-          },
-          {
-            title: "Income Report",
-            url: "/financial/report-management/income-report",
-          },
-          {
-            title: "Budget Report",
-            url: "/financial/report-management/budget-report",
-          },
-        ],
+        // no subItems — dropdown is rendered inside the page
       },
     ],
   },
