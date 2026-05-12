@@ -2,7 +2,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "../navigation/mode-toggle";
 import { AlertCircle, ArrowLeft, CheckCircle2, Loader2, MailCheck } from "lucide-react";
 import Link from "next/link";
 import { authService } from "@/services/auth.service";

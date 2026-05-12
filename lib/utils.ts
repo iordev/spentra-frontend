@@ -5,5 +5,19 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export const isValidEmail = (email: string) =>
-  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
+export const getTimezoneOffset = (timezoneName: string): string => {
+  try {
+    const now = new Date();
+    const formatter = new Intl.DateTimeFormat("en", {
+      timeZone: timezoneName,
+      timeZoneName: "shortOffset",
+    });
+
+    const parts = formatter.formatToParts(now);
+    const offsetPart = parts.find(p => p.type === "timeZoneName")?.value ?? "";
+
+    return offsetPart.replace("GMT", "UTC");
+  } catch {
+    return "";
+  }
+};

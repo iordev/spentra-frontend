@@ -7,7 +7,7 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ModeToggle } from "@/components/mode-toggle"; // adjust path if needed
+import { ModeToggle } from "../navigation/mode-toggle"; // adjust path if needed
 import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -79,7 +79,7 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
       {/* Top bar: back button left, mode toggle right */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/public">
+          <Link href="/">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Home
           </Link>

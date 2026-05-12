@@ -12,15 +12,15 @@ import {
   SidebarMenuSkeleton,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import NavOverview from "@/components/nav-overview";
-import NavAccessControl from "@/components/nav-access-control";
-import NavMasterData from "@/components/nav-master-data";
-import NavFinancial from "@/components/nav-financial";
-import { NavUser } from "@/components/nav-user";
+import NavOverview from "@/components/navigation/nav-overview";
+import NavAccessControl from "@/components/navigation/nav-access-control";
+import NavMasterData from "@/components/navigation/nav-master-data";
+import NavFinancial from "@/components/navigation/nav-financial";
+import { NavUser } from "@/components/navigation/nav-user";
 import { navOverview, navAccessControl, navMasterData, navFinancials } from "@/lib/data";
 import { useAuth } from "@/context/auth-context";
 import { useFilteredNav } from "@/hooks/use-filtered-nav";
-import { SidebarSkeleton } from "@/components/sidebar-skeleton"; // ← import from file
+import { SidebarSkeleton } from "@/components/navigation/sidebar-skeleton"; // ← import from file
 import Link from "next/link";
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
@@ -51,7 +51,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                   cursor-default pointer-events-none
                 "
               >
-                <Link href="/">
+                <Link href="/public">
                   <Avatar className="h-8 w-8 rounded-lg">
                     <AvatarImage src="/favicon.ico" alt="App logo" />
                     <AvatarFallback className="rounded-lg">S</AvatarFallback>

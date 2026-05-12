@@ -14,6 +14,7 @@ import {
   ChevronLeft,
   X,
   ImageIcon,
+  Rocket,
 } from "lucide-react";
 import { useAuthStore } from "@/store/auth.store";
 import Image from "next/image";
@@ -183,13 +184,13 @@ export function WelcomeModal({ open, onComplete, firstName }: WelcomeModalProps)
             {!isFirst && (
               <Button
                 variant="outline"
-                size="sm"
+                size="icon"
                 onClick={() => setCurrentStep(prev => prev - 1)}
                 disabled={isCompleting}
-                className="flex items-center gap-1 px-3"
+                className="h-9 w-9 shrink-0"
+                aria-label="Back"
               >
                 <ChevronLeft className="h-4 w-4" />
-                Back
               </Button>
             )}
 
@@ -201,7 +202,10 @@ export function WelcomeModal({ open, onComplete, firstName }: WelcomeModalProps)
               {isCompleting ? (
                 "Setting up..."
               ) : isLast ? (
-                "Get Started 🚀"
+                <>
+                  Get started
+                  <Rocket className="h-4 w-4" />
+                </>
               ) : (
                 <>
                   Next
@@ -211,9 +215,9 @@ export function WelcomeModal({ open, onComplete, firstName }: WelcomeModalProps)
             </Button>
           </div>
 
-          {/* Skip link */}
-          {!isLast && (
-            <div className="text-center">
+          {/* Skip link — always rendered to prevent height shift */}
+          <div className="text-center h-4">
+            {!isLast && (
               <button
                 onClick={handleSkip}
                 disabled={isCompleting}
@@ -221,8 +225,8 @@ export function WelcomeModal({ open, onComplete, firstName }: WelcomeModalProps)
               >
                 Skip tutorial
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>

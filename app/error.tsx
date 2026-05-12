@@ -4,7 +4,7 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/navigation/mode-toggle";
 import { ArrowLeft, RefreshCw, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";

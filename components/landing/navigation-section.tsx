@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "../navigation/mode-toggle";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 

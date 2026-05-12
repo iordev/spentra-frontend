@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "../navigation/mode-toggle";
 import {
   Select,
   SelectContent,
@@ -46,6 +46,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { OAuthRegisterDto, RegisterDto } from "@/types/auth.types";
 import { authService } from "@/services/auth.service";
 import { useAuthStore } from "@/store/auth.store";
+import { getTimezoneOffset } from "@/lib/utils";
 
 const stepTitles: Record<number, { title: string; description: string }> = {
   1: { title: "Enter Your Email", description: "We'll use this to verify your account" },
@@ -117,7 +118,10 @@ export default function MultiStepSignUp() {
     value: String(c.id),
     symbol: c.symbol,
   }));
-  const timezones = (timezonesData ?? []).map(t => ({ label: t.name, value: String(t.id) }));
+  const timezones = (timezonesData ?? []).map(t => ({
+    value: t.id.toString(),
+    label: ` ${t.name} (${getTimezoneOffset(t.name)})`,
+  }));
 
   // 2. react hook form
   const {
@@ -340,7 +344,7 @@ export default function MultiStepSignUp() {
       {/* Top bar: back button left, mode toggle right */}
       <div className="absolute top-4 left-4 right-4 z-50 flex items-center justify-between">
         <Button variant="ghost" size="sm" asChild>
-          <Link href="/public">
+          <Link href="/">
             <ArrowLeft className="h-4 w-4 mr-1" />
             Back to Home
           </Link>

@@ -1,14 +1,14 @@
 import React, { ReactNode } from "react";
 import { cookies } from "next/headers";
-import { AppSidebar } from "@/components/app-sidebar";
+import { AppSidebar } from "@/components/navigation/app-sidebar";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
-import { ModeToggle } from "@/components/mode-toggle";
-import { SystemSettingsButton } from "@/components/system-settings-button";
+import { ModeToggle } from "@/components/navigation/mode-toggle";
+import { SystemSettingsButton } from "@/components/navigation/system-settings-button";
 
-import SearchCommandMenu from "@/components/search-command-menu";
+import SearchCommandMenu from "../../components/navigation/search-command-menu";
 
-import { DynamicBreadcrumb } from "@/components/dynamic-breadcrumbs";
+import { DynamicBreadcrumb } from "@/components/navigation/dynamic-breadcrumbs";
 import { AuthProvider } from "@/context/auth-context";
 
 const AppLayout = async ({ children }: { children: ReactNode }) => {
