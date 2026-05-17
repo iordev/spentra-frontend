@@ -1,5 +1,4 @@
 import axios from "axios";
-import { useAuthStore } from "@/store/auth.store";
 
 const api = axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3500/api/v1",
@@ -14,10 +13,6 @@ api.interceptors.response.use(
   async error => {
     const originalRequest = error.config;
 
-    // Don't retry if:
-    // 1. Already retried
-    // 2. The failed request IS the refresh endpoint
-    // 3. The failed request is the login endpoint
     if (
       error.response?.status === 401 &&
       !originalRequest._retry &&
@@ -35,8 +30,7 @@ api.interceptors.response.use(
 
         return api(originalRequest);
       } catch {
-        // Refresh failed — clear user and redirect
-        useAuthStore.getState().clearUser();
+        // ✅ no Zustand — just redirect, cache clears on page reload
         window.location.href = "/signin";
         return Promise.reject(error);
       }

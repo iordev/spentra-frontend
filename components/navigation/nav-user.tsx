@@ -22,6 +22,8 @@ import { useState } from "react";
 import { authService } from "@/services/auth.service";
 import axios from "axios";
 import { useAuthStore } from "@/store/auth.store";
+import { useQueryClient } from "@tanstack/react-query";
+import { authKeys } from "@/hooks/useAuth";
 
 // ─── Helper ───────────────────────────────────────────────────────────────────
 
@@ -45,6 +47,7 @@ export function NavUser({
 }) {
   const { isMobile } = useSidebar();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
   const initials = getInitials(user.name);
@@ -58,7 +61,7 @@ export function NavUser({
         console.error("Logout failed:", err.response?.data?.message);
       }
     } finally {
-      useAuthStore.getState().clearUser();
+      queryClient.removeQueries({ queryKey: authKeys.me }); // ✅ replaces clearUser
       setIsLoggingOut(false);
       router.replace("/signin");
     }

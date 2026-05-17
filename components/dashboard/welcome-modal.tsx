@@ -16,9 +16,11 @@ import {
   ImageIcon,
   Rocket,
 } from "lucide-react";
-import { useAuthStore } from "@/store/auth.store";
 import Image from "next/image";
 import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+import { useAuth } from "@/context/auth-context";
+import { useQueryClient } from "@tanstack/react-query";
+import { authKeys } from "@/hooks/useAuth";
 
 interface WelcomeModalProps {
   open: boolean;
@@ -72,8 +74,8 @@ const tutorialSteps = [
 export function WelcomeModal({ open, onComplete, firstName }: WelcomeModalProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [isCompleting, setIsCompleting] = useState(false);
-  const setUser = useAuthStore(state => state.setUser);
-  const user = useAuthStore(state => state.user);
+  const queryClient = useQueryClient();
+  const { me } = useAuth();
 
   const step = tutorialSteps[currentStep];
   const isFirst = currentStep === 0;
@@ -84,8 +86,9 @@ export function WelcomeModal({ open, onComplete, firstName }: WelcomeModalProps)
     setIsCompleting(true);
     try {
       await userService.completeOnboarding();
-      if (user) {
-        setUser({ ...user, isOnboarded: true });
+      if (me) {
+        // ✅ replaces setUser — updates React Query cache directly
+        queryClient.setQueryData(authKeys.me, { ...me, isOnboarded: true });
       }
       onComplete();
     } catch {
@@ -149,7 +152,7 @@ export function WelcomeModal({ open, onComplete, firstName }: WelcomeModalProps)
           </div>
 
           {/* Gradient fade at bottom */}
-          <div className="absolute bottom-0 left-0 right-0 h-10 bg-gradient-to-t from-background to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 h-10 bg-linear-to-t from-background to-transparent" />
         </div>
 
         {/* Bottom content — compact text + controls */}

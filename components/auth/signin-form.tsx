@@ -18,10 +18,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { SignInFormData, signInSchema } from "@/lib/schemas/auth.schema";
 import { useForm } from "react-hook-form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { useAuthStore } from "@/store/auth.store";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { authKeys } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 
 export function SignInForm({ className, ...props }: React.ComponentProps<"div">) {
   const router = useRouter();
@@ -48,13 +49,16 @@ export function SignInForm({ className, ...props }: React.ComponentProps<"div">)
   const cleanError = (message: string) => {
     return message.replace(/\(at\s[\d:]+\s[AP]M\)\./g, "").trim();
   };
+  const queryClient = useQueryClient(); // ✅ add this
+
   const onSubmit = async (formData: SignInFormData) => {
     setIsLoading(true);
     setServerError("");
 
     try {
       const user = await authService.login(formData.identifier, formData.password);
-      useAuthStore.getState().setUser(user);
+      queryClient.setQueryData(authKeys.me, user); // ✅ set immediately
+      void queryClient.invalidateQueries({ queryKey: authKeys.me });
       router.push("/overview/dashboard");
     } catch (err) {
       if (axios.isAxiosError(err)) {

@@ -21,6 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import axios from "axios";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import {
+  authKeys,
   useCheckEmail,
   useCheckUsername,
   useGetCountries,
@@ -45,8 +46,8 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { OAuthRegisterDto, RegisterDto } from "@/types/auth.types";
 import { authService } from "@/services/auth.service";
-import { useAuthStore } from "@/store/auth.store";
 import { getTimezoneOffset } from "@/lib/utils";
+import { useQueryClient } from "@tanstack/react-query";
 
 const stepTitles: Record<number, { title: string; description: string }> = {
   1: { title: "Enter Your Email", description: "We'll use this to verify your account" },
@@ -77,6 +78,7 @@ export default function MultiStepSignUp() {
   const { mutateAsync: checkUsername, isPending: isCheckingUsername } = useCheckUsername();
 
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const provider = searchParams.get("provider");
   const isOAuth = !!provider;
 
@@ -307,7 +309,8 @@ export default function MultiStepSignUp() {
           provider: provider!,
         };
         const response = await authService.oauthRegister(dto);
-        useAuthStore.getState().setUser(response);
+        queryClient.setQueryData(authKeys.me, response);
+        void queryClient.invalidateQueries({ queryKey: authKeys.me });
         router.push("/overview/dashboard");
       } else {
         const dto: RegisterDto = {

@@ -1,25 +1,12 @@
 // context/auth-context.tsx
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from "react";
-
-type Me = {
-  id: number;
-  fullName: string;
-  email: string;
-  avatarUrl: string | null;
-  theme: string;
-  isOnboarded: boolean;
-  role: {
-    name: string;
-    permissions: string[];
-  };
-  currency: { code: string; symbol: string };
-  timezone: { name: string };
-};
+import React, { createContext, useContext } from "react";
+import { useMe } from "@/hooks/useAuth";
+import { LoginResponse } from "@/types/auth.types";
 
 type AuthContextType = {
-  me: Me | null;
+  me: LoginResponse | null;
   loading: boolean;
   hasPermission: (permission: string) => boolean;
   hasAnyPermission: (permissions: string[]) => boolean;
@@ -29,38 +16,23 @@ type AuthContextType = {
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [me, setMe] = useState<Me | null>(null); // ← always null on server
-  const [loading, setLoading] = useState(true); // ← always true on server
-
-  useEffect(() => {
-    // No more setMe for cache here — already handled in useState above
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/me`, {
-      credentials: "include",
-    })
-      .then(res => res.json())
-      .then(res => {
-        setTimeout(() => {
-          setMe(res.data);
-          sessionStorage.setItem("me", JSON.stringify(res.data));
-          setLoading(false);
-        }, 3000); // ← remove in production
-      })
-      .catch(() => {
-        sessionStorage.removeItem("me");
-        setMe(null);
-        setLoading(false);
-      });
-  }, []);
+  // ✅ single source of truth — React Query handles caching
+  const { data: me, isLoading } = useMe();
 
   const hasPermission = (permission: string) => me?.role.permissions.includes(permission) ?? false;
 
   const hasAnyPermission = (permissions: string[]) => permissions.some(p => hasPermission(p));
 
   const hasAllPermissions = (permissions: string[]) => permissions.every(p => hasPermission(p));
-
   return (
     <AuthContext.Provider
-      value={{ me, loading, hasPermission, hasAnyPermission, hasAllPermissions }}
+      value={{
+        me: me ?? null,
+        loading: isLoading,
+        hasPermission,
+        hasAnyPermission,
+        hasAllPermissions,
+      }}
     >
       {children}
     </AuthContext.Provider>

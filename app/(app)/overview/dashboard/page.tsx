@@ -1,39 +1,24 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useEffect, useState } from "react";
-import { useAuthStore } from "@/store/auth.store";
 import { WelcomeModal } from "@/components/dashboard/welcome-modal";
-import { authService } from "@/services/auth.service";
+import { useAuth } from "@/context/auth-context";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 const ViewDashboardPage = () => {
-  const [loading, setLoading] = useState(true);
-  const user = useAuthStore(state => state.user);
-  const setUser = useAuthStore(state => state.setUser);
   const router = useRouter();
+  const { me, loading } = useAuth();
 
+  // ✅ derive from me directly — no separate dismissed state needed
   const [welcomeDismissed, setWelcomeDismissed] = useState(false);
-  const showWelcome = !loading && !!user && !user.isOnboarded && !welcomeDismissed;
 
   useEffect(() => {
-    const init = async () => {
-      // If no user in store (e.g. OAuth redirect), fetch from /auth/me
-      if (!user) {
-        try {
-          const data = await authService.me();
-          setUser(data);
-        } catch {
-          router.replace("/signin");
-          return;
-        }
-      }
-      // Simulate loading
-      setTimeout(() => setLoading(false), 1500);
-    };
+    if (!loading && !me) router.replace("/signin");
+  }, [loading, me, router]);
 
-    void init();
-  }, []);
+  // ✅ only show if me exists, not onboarded, and not dismissed
+  const showWelcome = !loading && !!me && !me.isOnboarded && !welcomeDismissed;
 
   if (loading) {
     return (
@@ -59,10 +44,11 @@ const ViewDashboardPage = () => {
     <>
       <WelcomeModal
         open={showWelcome}
-        onComplete={() => setWelcomeDismissed(true)}
-        firstName={user?.firstName ?? ""}
+        onComplete={() => {
+          setWelcomeDismissed(true); // ✅ hide modal immediately
+        }}
+        firstName={me?.firstName ?? ""}
       />
-
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="grid auto-rows-min gap-4 md:grid-cols-3">
           <div className="bg-muted/50 aspect-video rounded-xl" />

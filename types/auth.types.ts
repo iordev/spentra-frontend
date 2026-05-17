@@ -109,6 +109,7 @@ export interface LoginResponse {
   suffix: string | null;
   birthDate: string;
   gender: string;
+  dateFormat: string | null; // ✅ add — backend returns this
   avatarUrl: string | null;
   theme: string;
   emailVerified: boolean;
@@ -116,13 +117,11 @@ export interface LoginResponse {
   createdAt: string;
   updatedAt: string;
   role: {
-    id: number;
-    name: string;
-    description: string;
-    permissions: { id: number; name: string }[];
+    name: string; // ✅ remove id, description — not in response
+    permissions: string[]; // ✅ string[] not { id, name }[]
   };
-  occupation: { id: number; name: string };
-  currency: { id: number; name: string; code: string; symbol: string };
-  timezone: { id: number; name: string };
-  country: { id: number; name: string; code: string };
+  occupation: { name: string }; // ✅ remove id — not in response
+  currency: { code: string; symbol: string }; // ✅ remove id, name
+  timezone: { name: string }; // ✅ remove id
+  country: { name: string; code: string }; // ✅ remove id
 }
