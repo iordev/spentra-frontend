@@ -10,11 +10,13 @@ import SearchCommandMenu from "../../components/navigation/search-command-menu";
 
 import { DynamicBreadcrumb } from "@/components/navigation/dynamic-breadcrumbs";
 import { AuthProvider } from "@/context/auth-context";
+import { HeaderActions } from "@/components/navigation/header-actions";
 
 const AppLayout = async ({ children }: { children: ReactNode }) => {
   // Get sidebar state from cookies
   const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get("spentra_sidebar_state")?.value === "true";
+  const sidebarCookie = cookieStore.get("spentra_sidebar_state")?.value;
+  const defaultOpen = sidebarCookie !== undefined ? sidebarCookie === "true" : true;
 
   return (
     <AuthProvider>
@@ -32,14 +34,7 @@ const AppLayout = async ({ children }: { children: ReactNode }) => {
               <DynamicBreadcrumb />
             </div>
 
-            {/*</div>*/}
-            <div className="flex items-center gap-2 px-3  flex-1 justify-end">
-              <SearchCommandMenu />
-              <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
-              <ModeToggle />
-              <Separator orientation="vertical" className="data-[orientation=vertical]:h-4" />
-              <SystemSettingsButton />
-            </div>
+            <HeaderActions />
           </header>
 
           {/* Page content */}
